@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", // Adjust the target version if needed
+    "module": "ESNext", // Ensure you're using the correct module system
+    "declaration": true, // This tells TypeScript to generate .d.ts files
+    "declarationDir": "./dist", // Output the .d.ts files to the dist folder
+    "esModuleInterop": true, // Helps with importing modules
+    "jsx": "react-jsx", // If you're using JSX
+    "skipLibCheck": true, // Optional: Skip type checking of declaration files
+    "moduleResolution": "node", // Use Node's module resolution strategy
+    "allowSyntheticDefaultImports": true, // Helps with importing default exports
+    "sourceMap": true // Optional: Generate source maps
+  },
+  "include": ["src/**/*.tsx", "src/**/*.ts"], // Include your source files
+  "exclude": ["node_modules"] // Exclude node_modules
+}
