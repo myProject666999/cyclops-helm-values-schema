@@ -16,6 +16,7 @@ import (
 	json "github.com/json-iterator/go"
 	"gopkg.in/yaml.v3"
 	helmchart "helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
 
 	cyclopsv1alpha1 "github.com/cyclops-ui/cyclops/cyclops-ctrl/api/v1alpha1"
 	"github.com/cyclops-ui/cyclops/cyclops-ctrl/internal/mapper"
@@ -131,6 +132,7 @@ func (r Repo) loadFromHelmChartRepo(repo, chart, version string) ([]byte, error)
 func (r Repo) mapHelmChart(chartName string, files map[string][]byte) (*models.Template, error) {
 	metadataBytes := []byte{}
 	schemaBytes := []byte{}
+	valuesBytes := []byte{}
 	chartFiles := make([]*helmchart.File, 0)
 
 	templateFiles := make([]*helmchart.File, 0)
@@ -148,6 +150,11 @@ func (r Repo) mapHelmChart(chartName string, files map[string][]byte) (*models.T
 
 		if len(parts) == 2 && parts[1] == "values.schema.json" {
 			schemaBytes = content
+			continue
+		}
+
+		if len(parts) == 2 && parts[1] == "values.yaml" {
+			valuesBytes = content
 			continue
 		}
 
@@ -201,6 +208,11 @@ func (r Repo) mapHelmChart(chartName string, files map[string][]byte) (*models.T
 		return &models.Template{}, err
 	}
 
+	values, err := chartutil.ReadValues(valuesBytes)
+	if err != nil {
+		return &models.Template{}, fmt.Errorf("failed to parse values.yaml of chart %v: %w", chartName, err)
+	}
+
 	// region load dependencies
 	dependencies, err := r.loadDependencies(metadata)
 	if err != nil {
@@ -230,6 +242,7 @@ func (r Repo) mapHelmChart(chartName string, files map[string][]byte) (*models.T
 		Dependencies:      dependencies,
 		HelmChartMetadata: metadata,
 		RawSchema:         schemaBytes,
+		Values:            values,
 		IconURL:           metadata.Icon,
 	}, nil
 }

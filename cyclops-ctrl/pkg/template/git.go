@@ -26,6 +26,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
 
 	cyclopsv1alpha1 "github.com/cyclops-ui/cyclops/cyclops-ctrl/api/v1alpha1"
 	"github.com/cyclops-ui/cyclops/cyclops-ctrl/internal/mapper"
@@ -92,6 +93,7 @@ func (r Repo) LoadTemplate(repoURL, path, commit, resolvedVersion string) (*mode
 	// region map files to template
 	metadataBytes := []byte{}
 	schemaBytes := []byte{}
+	valuesBytes := []byte{}
 	chartFiles := make([]*chart.File, 0)
 
 	templateFiles := make([]*chart.File, 0)
@@ -109,6 +111,11 @@ func (r Repo) LoadTemplate(repoURL, path, commit, resolvedVersion string) (*mode
 
 		if len(parts) == 1 && parts[0] == "values.schema.json" {
 			schemaBytes = f.Data
+			continue
+		}
+
+		if len(parts) == 1 && parts[0] == "values.yaml" {
+			valuesBytes = f.Data
 			continue
 		}
 
@@ -152,6 +159,11 @@ func (r Repo) LoadTemplate(repoURL, path, commit, resolvedVersion string) (*mode
 		return &models.Template{}, err
 	}
 
+	values, err := chartutil.ReadValues(valuesBytes)
+	if err != nil {
+		return &models.Template{}, errors.Wrapf(err, "failed to parse values.yaml from repo %v on path %v", repoURL, path)
+	}
+
 	// region load dependencies
 	dependencies, err := r.loadDependencies(metadata)
 	if err != nil {
@@ -183,6 +195,7 @@ func (r Repo) LoadTemplate(repoURL, path, commit, resolvedVersion string) (*mode
 		Dependencies:      dependencies,
 		HelmChartMetadata: metadata,
 		RawSchema:         schemaBytes,
+		Values:            values,
 		IconURL:           metadata.Icon,
 	}
 	// endregion

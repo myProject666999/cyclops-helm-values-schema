@@ -18,8 +18,9 @@ type Template struct {
 	ResolvedVersion string       `json:"resolvedVersion"`
 	IconURL         string       `json:"iconURL"`
 
-	HelmChartMetadata *helm.Metadata `json:"helmChartMetadata"`
-	RawSchema         []byte         `json:"rawSchema"`
+	HelmChartMetadata *helm.Metadata         `json:"helmChartMetadata"`
+	RawSchema         []byte                 `json:"rawSchema"`
+	Values            map[string]interface{} `json:"values"`
 
 	Files     []*chart.File `json:"files"`
 	Templates []*chart.File `json:"templates"`

@@ -46,8 +46,19 @@ Once you input all the fields and hit the `save` button, all resources from your
 
 :::info
 
-Version `v0.0.8-alpha` does not support `alias` and `import-values`.
+Cyclops supports dependency `condition` (evaluated after chart defaults are merged in, so conditions can rely on default values) and `alias` (the dependency is configured under its alias).
 
-At the moment, when you reference a dependency, it is automatically included in your chart. `condition` and `tags` properties are not yet supported.
+`import-values` is not supported: if a chart in the dependency tree declares `import-values` in its `Chart.yaml`, rendering the Module fails with a diagnostic error instead of silently ignoring them. Dependency `tags` are not evaluated.
 
 :::
+
+## Values assembly
+
+When rendering a Module, Cyclops assembles Helm values following Helm's own conventions:
+
+1. Each chart's `values.yaml` provides the defaults, including dependency charts.
+2. The parent chart can override dependency values under the dependency's name (or its `alias`, when one is declared).
+3. `global` values are propagated down to every dependency's scope.
+4. The Module's `spec.values` always win over chart defaults.
+
+Objects are merged recursively, while arrays and scalars are replaced as a whole. Setting a key to explicit `null` in the Module's values deletes that key from the defaults, same as with Helm.
